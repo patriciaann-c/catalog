@@ -79,6 +79,18 @@ function App() {
                 setError('');
             })
             .catch((err) => setError(err.message));
+    };
+
+    function deleteProduct(id) {
+        fetch(`${API_URL}/products/${id}`, { method: 'DELETE' })
+            .then((response) => response.json())
+            .then((jsonData) => {
+                if (!jsonData.success) {
+                    throw new Error(jsonData.message);
+                }
+                setProducts(products.filter((product) => product.id !== id));
+            })
+            .catch((err) => setError(err.message));
     }
 
     return (
@@ -118,6 +130,7 @@ function App() {
                     <h3 className="h5">{product.name}</h3>
                     <p>{product.description}</p>
                     <p>€ {Number(product.price).toFixed(2)}</p>
+                    <button className="btn btn-outline-danger btn-sm" onClick={() => deleteProduct(product.id)}>Delete</button>
                 </Fragment>
             ))}
         </div>
