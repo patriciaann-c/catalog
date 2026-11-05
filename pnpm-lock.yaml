@@ -211,6 +211,9 @@ importers:
 
   frontend:
     dependencies:
+      bootstrap:
+        specifier: ^5.3.8
+        version: 5.3.8(@popperjs/core@2.11.8)
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -396,6 +399,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@popperjs/core@2.11.8':
+    resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
+
   '@rolldown/binding-android-arm-eabi@1.2.16':
     resolution: {integrity: sha512-ia3DwAs0OsMGS7+IConptSiyk9pEXkOx/AbJ2n/lAGxH3QkWQus1t8d7gnAT38FCU2sQu8lUbeR6AiZFv4JxaA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -535,6 +541,11 @@ packages:
   body-parser@2.4.0:
     resolution: {integrity: sha512-Ifk1KcLrxaGt1occQagQNFNNOqRt1LFuehEnHHzB8Z6cRgIxRU1TBaiIsUiCdA+gy5PL7Y1IX31DNKkRmxtXjQ==}
     engines: {node: '>=18'}
+
+  bootstrap@5.3.8:
+    resolution: {integrity: sha512-HP1SZDqaLDPwsNiqRqi5NcP0SSXciX2s9E+RyqJIIqGo+vJeN5AJVM98CXmW/Wux0nQ5L7jeWUdplCEf0Ee+tg==}
+    peerDependencies:
+      '@popperjs/core': ^2.11.8
 
   bytes@3.1.2:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
@@ -1160,6 +1171,8 @@ snapshots:
   '@oxlint/binding-win32-x64-msvc@1.91.0':
     optional: true
 
+  '@popperjs/core@2.11.8': {}
+
   '@rolldown/binding-android-arm-eabi@1.2.16':
     optional: true
 
@@ -1244,6 +1257,10 @@ snapshots:
       type-is: 2.1.0
     transitivePeerDependencies:
       - supports-color
+
+  bootstrap@5.3.8(@popperjs/core@2.11.8):
+    dependencies:
+      '@popperjs/core': 2.11.8
 
   bytes@3.1.2: {}
 

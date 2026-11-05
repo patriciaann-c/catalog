@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Fragment } from 'react';
 
 const API_URL = 'http://localhost:3000';
 
@@ -18,17 +19,18 @@ function App() {
     }, [])
 
     return (
-        <>
-            <h1>My Store</h1>
-            {products.map(product => {
+        <div className="container py-4">
+            <h1 className="h2 mb-4">My Store</h1>
+            {products.map((product) => {
                 return (
-                    <>
-                        <h3>{product.name}</h3>
+                    <Fragment key={product.id}>
+                        <h3 className="h5">{product.name}</h3>
                         <p>{product.description}</p>
-                    </>
-                )
+                        <p>€ {product.price.toFixed(2)}</p>
+                    </Fragment>
+                );
             })}
-        </>
+        </div>
     )
 }
 
