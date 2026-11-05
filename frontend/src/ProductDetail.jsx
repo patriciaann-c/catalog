@@ -36,9 +36,10 @@ function ProductDetail() {
     return (
         <div className="container py-4">
             <div className="card mb-3">
+                {product.image && <img src={product.image} alt={product.name} className="card-img-top" />}
                 <div className="card-body">
                     <h1 className="h2">{product.name}</h1>
-                    <h5 className="text-primary">€ {product.price.toFixed(2)}</h5>
+                    <h5 className="text-primary">€ {Number(product.price).toFixed(2)}</h5>
                     <p>{product.description}</p>
                 </div>
             </div>

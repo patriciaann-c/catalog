@@ -1,17 +1,33 @@
 import { Router } from "express";
 import products from "../data/db-store-completed.js";
+import { client } from "../prisma-client.js";
 
 const router = Router();
 
-router.get('/', (req, res) => {
-    res.json({
-        success: true,
-        message: '',
-        data: products
-    })
+router.get('/', async (req, res) => {
+    const products = await client.product.findMany({ orderBy: { id: 'asc' } });
+
+    res.json({ success: true, message: '', data: products });
 });
 
-router.post('/', (req, res) => {
+router.get('/:id', async (req, res) => {
+    const product = await client.product.findUnique({
+        where: { id: Number(req.params.id) }
+    });
+
+    if (!product) {
+        return res.status(404).json({
+            success: false,
+            message: 'Product not found',
+            data: null
+        });
+    }
+
+    res.json({ success: true, message: '', data: product });
+});
+
+
+router.post('/', async (req, res) => {
     const { name, description, price } = req.body;
 
     if (!name || price === undefined) {
@@ -22,55 +38,35 @@ router.post('/', (req, res) => {
         });
     }
 
-    const newProduct = { id: products.length + 1, name, description, price };
-    products.push(newProduct);
+    const product = await client.product.create({
+        data: { name, description: description ?? '', price }
+    });
 
     res.status(201).json({
         success: true,
         message: 'Product created',
-        data: newProduct
-    });
-});
-
-router.get('/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const product = products.find((item) => item.id === id);
-
-    if (!product) {
-        return res.status(404).json({
-            success: false,
-            message: 'Product not found',
-            data: null
-        });
-    }
-
-    res.json({
-        success: true,
-        message: '',
         data: product
     });
 });
 
 
-router.delete('/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const index = products.findIndex((product) => product.id === id);
-
-    if (index === -1) {
-        return res.status(404).json({
-            success: false,
-            message: 'Product not found',
-            data: null
+router.delete('/:id', async (req, res) => {
+    try {
+        const product = await client.product.delete({
+            where: { id: Number(req.params.id) }
         });
+
+        res.json({ success: true, message: 'Product deleted', data: product });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found',
+                data: null
+            });
+        }
+        throw err;
     }
-
-    const [deleted] = products.splice(index, 1);
-
-    res.json({
-        success: true,
-        message: 'Product eliminated',
-        data: deleted
-    });
 });
 
 export default router;

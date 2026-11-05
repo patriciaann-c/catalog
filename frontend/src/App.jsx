@@ -95,6 +95,8 @@ function App() {
 
     return (
         <div className="container py-4">
+            {products.image && <img src={products.image} alt={products.name}
+                width="90" height="60" className="rounded object-fit-cover" loading="lazy" />}
             <h1 className="h2 mb-4">My Store</h1>
 
             <form onSubmit={handleSubmit} className="card card-body mb-4">
