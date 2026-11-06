@@ -49,6 +49,32 @@ router.post('/', async (req, res) => {
     });
 });
 
+router.put('/:id', async (req, res) => {
+    const { name, description, price } = req.body;
+    if (!name || price === undefined) {
+        return res.status(400).json({
+            success: false,
+            message: 'Name and price required',
+            data: null
+        });
+    }
+    try {
+        const product = await client.product.update({
+            where: { id: Number(req.params.id) },
+            data: { name, description: description ?? '', price }
+        });
+        res.json({ success: true, message: 'Product updated', data: product });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found',
+                data: null
+            });
+        }
+        throw err;
+    }
+});
 
 router.delete('/:id', async (req, res) => {
     try {

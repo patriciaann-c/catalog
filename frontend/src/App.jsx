@@ -9,6 +9,21 @@ function App() {
     const [products, setProducts] = useState([]);
     const [error, setError] = useState('');
     const [form, setForm] = useState(emptyForm);
+    const [editingId, setEditingId] = useState(null);
+
+
+    function startEdit(product) {
+        setEditingId(product.id);
+        setForm({
+            name: product.name,
+            descrizione: product.descrizione,
+            price: String(product.price)
+        });
+    }
+    function cancelEdit() {
+        setEditingId(null);
+        setForm(emptyForm);
+    }
 
     function handleChange(e) {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -63,9 +78,12 @@ function App() {
 
     function handleSubmit(e) {
         e.preventDefault();
-
-        fetch(`${API_URL}/products`, {
-            method: 'POST',
+        const isEditing = editingId !== null;
+        const url = isEditing
+            ? `${API_URL}/products/${editingId}`
+            : `${API_URL}/products`;
+        fetch(url, {
+            method: isEditing ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...form, price: Number(form.price) }),
         })
@@ -74,12 +92,16 @@ function App() {
                 if (!jsonData.success) {
                     throw new Error(jsonData.message);
                 }
-                setProducts([jsonData.data, ...products]);
-                setForm(emptyForm);
+                if (isEditing) {
+                    setProducts(products.map((p) => (p.id === editingId ? jsonData.data : p)));
+                } else {
+                    setProducts([jsonData.data, ...products]);
+                }
+                cancelEdit();
                 setError('');
             })
             .catch((err) => setError(err.message));
-    };
+    }
 
     function deleteProduct(id) {
         fetch(`${API_URL}/products/${id}`, { method: 'DELETE' })
@@ -115,7 +137,10 @@ function App() {
                     </div>
                 </div>
                 <div>
-                    <button type="submit" className="btn btn-primary">Add product</button>
+                    <button type="submit" className="btn btn-primary">
+                        {editingId !== null ? 'Save' : 'Add product'}
+                    </button>
+                    {editingId !== null && <button type="button" className="btn btn-outline-secondary" onClick={cancelEdit}>Cancel</button>}
                 </div>
             </form>
 
@@ -133,6 +158,7 @@ function App() {
                     <p>{product.description}</p>
                     <p>€ {Number(product.price).toFixed(2)}</p>
                     <button className="btn btn-outline-danger btn-sm" onClick={() => deleteProduct(product.id)}>Delete</button>
+                    <button className="btn btn-outline-secondary btn-sm" onClick={() => startEdit(product)}>Modify</button>
                 </Fragment>
             ))}
         </div>
