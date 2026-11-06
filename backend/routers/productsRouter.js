@@ -1,6 +1,8 @@
 import { Router } from "express";
 import products from "../data/db-store-completed.js";
 import { client } from "../prisma-client.js";
+import checkProductId from '../middlewares/checkProductId.js';
+import checkProductBody from '../middlewares/checkProductBody.js';
 
 const router = Router();
 
@@ -46,8 +48,8 @@ router.get('/:id', async (req, res) => {
 });
 
 
-router.post('/', async (req, res) => {
-    const { name, description, price } = req.body;
+router.post('/', checkProductBody, async (req, res) => {
+    const { name, description, price, image } = req.sanitizedData;
 
     if (!name || price === undefined) {
         return res.status(400).json({
@@ -58,7 +60,7 @@ router.post('/', async (req, res) => {
     }
 
     const product = await client.product.create({
-        data: { name, description: description ?? '', price }
+        data: { name, description: description ?? '', price, image }
     });
 
     res.status(201).json({
@@ -68,26 +70,19 @@ router.post('/', async (req, res) => {
     });
 });
 
-router.put('/:id', async (req, res) => {
-    const { name, description, price } = req.body;
-    if (!name || price === undefined) {
-        return res.status(400).json({
-            success: false,
-            message: 'Name and price required',
-            data: null
-        });
-    }
+router.put('/:id', checkProductId, checkProductBody, async (req, res) => {
+    const { name, description, price, image } = req.sanitizedData;
     try {
         const product = await client.product.update({
             where: { id: Number(req.params.id) },
-            data: { name, description: description ?? '', price }
+            data: { name, description, price, image }
         });
-        res.json({ success: true, message: 'Product updated', data: product });
+        res.json({ success: true, message: 'Prodotto aggiornato', data: product });
     } catch (err) {
         if (err.code === 'P2025') {
             return res.status(404).json({
                 success: false,
-                message: 'Product not found',
+                message: 'Prodotto non trovato',
                 data: null
             });
         }

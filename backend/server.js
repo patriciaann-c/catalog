@@ -11,6 +11,18 @@ app.use(express.json());
 
 app.use('/products', productsRouter);
 
+app.use((err, req, res, next) => {
+    const status = err.status ?? err.statusCode ?? 500;
+    if (status >= 500) {
+        console.error(err);
+    }
+    res.status(status).json({
+        success: false,
+        message: status >= 500 ? 'Error inside the server' : 'Request not valid',
+        data: null
+    });
+});
+
 app.listen(PORT, (error) => {
     if (error) {
         console.error(error);
