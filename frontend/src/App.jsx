@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 
 const API_URL = 'http://localhost:3000';
@@ -10,6 +10,11 @@ function App() {
     const [error, setError] = useState('');
     const [form, setForm] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [searchInput, setSearchInput] = useState('');
+    const [search, setSearch] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
 
     function startEdit(product) {
@@ -27,6 +32,12 @@ function App() {
 
     function handleChange(e) {
         setForm({ ...form, [e.target.name]: e.target.value });
+    }
+
+    function handleSearch(e) {
+        e.preventDefault();
+        setPage(1);
+        setSearch(searchInput);
     }
 
     function createProduct() {
@@ -51,30 +62,32 @@ function App() {
             .catch((err) => setError(err.message));
     };
 
-    function loadProducts() {
-        fetch(`${API_URL}/products`)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Can't load the products");
-                }
-                return response.json();
-            })
+    function loadProducts(targetPage = page, targetSearch = search) {
+        setIsLoading(true);
+        const params = new URLSearchParams({ page: targetPage, limit: 20, search: targetSearch });
+        fetch(`${API_URL}/products?${params}`)
+            .then((response) => response.json())
             .then((jsonData) => {
                 if (!jsonData.success) {
                     throw new Error(jsonData.message);
                 }
                 setProducts(jsonData.data);
+                setTotalPages(jsonData.meta?.totalPages ?? 1);
+                setError('');
             })
-            .catch((err) => {
-                console.error(`Error: ${err.message}`);
-                setError(err.message);
-            });
+            .catch((err) => setError(err.message))
+            .finally(() => setIsLoading(false));
     }
 
+    function handleReload() {
+        setSearchInput('');
+        setSearch('');
+        setPage(1);
+        loadProducts(1, '');
+    }
     useEffect(() => {
-        loadProducts()
-    },
-        []);
+        loadProducts();
+    }, [page, search]);
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -117,8 +130,6 @@ function App() {
 
     return (
         <div className="container py-4">
-            {products.image && <img src={products.image} alt={products.name}
-                width="90" height="60" className="rounded object-fit-cover" loading="lazy" />}
             <h1 className="h2 mb-4">My Store</h1>
 
             <form onSubmit={handleSubmit} className="card card-body mb-4">
@@ -144,23 +155,65 @@ function App() {
                 </div>
             </form>
 
-            <button className="btn btn-outline-secondary mb-3" onClick={loadProducts}>Reload products</button>
+            <form onSubmit={handleSearch} className="row g-2 mb-4">
+                <div className="col-md-10">
+                    <input
+                        className="form-control"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Search by name"
+                    />
+                </div>
+                <div className="col-md-2 d-grid">
+                    <button type="submit" className="btn btn-primary">Search</button>
+                </div>
+            </form>
+
+            <button
+                className="btn btn-outline-secondary mb-3"
+                onClick={handleReload}
+                disabled={isLoading}
+            >
+                {isLoading ? 'Reloading...' : 'Reload products'}
+            </button>
 
             {error && <div className="alert alert-danger">{error}</div>}
 
-            <h3 className="h5">
-                <Link to={`/products/${products.id}`}>{products.name}</Link>
-            </h3>
-
             {products.map((product) => (
-                <Fragment key={product.id}>
-                    <h3 className="h5">{product.name}</h3>
+                <div key={product.id} className="card card-body mb-3">
+                    {product.image && (
+                        <img
+                            src={product.image}
+                            alt={product.name}
+                            width="200"
+                            height="150"
+                            className="rounded object-fit-cover mb-2"
+                            loading="lazy"
+                        />
+                    )}
+                    <h3 className="h5">
+                        <Link to={`/products/${product.id}`}>{product.name}</Link>
+                    </h3>
                     <p>{product.description}</p>
-                    <p>€ {Number(product.price).toFixed(2)}</p>
-                    <button className="btn btn-outline-danger btn-sm" onClick={() => deleteProduct(product.id)}>Delete</button>
-                    <button className="btn btn-outline-secondary btn-sm" onClick={() => startEdit(product)}>Modify</button>
-                </Fragment>
+                    <p className="fw-bold">€ {Number(product.price).toFixed(2)}</p>
+                    <div>
+                        <button className="btn btn-outline-danger btn-sm me-2" onClick={() => deleteProduct(product.id)}>Delete</button>
+                        <button className="btn btn-outline-secondary btn-sm" onClick={() => startEdit(product)}>Modify</button>
+                    </div>
+                </div>
             ))}
+
+            <div className="d-flex justify-content-center align-items-center gap-3">
+                <button className="btn btn-outline-secondary" disabled={page === 1}
+                    onClick={() => setPage(page - 1)}>
+                    Previous
+                </button>
+                <span>Page {page} of {totalPages}</span>
+                <button className="btn btn-outline-secondary" disabled={page >= totalPages}
+                    onClick={() => setPage(page + 1)}>
+                    Next
+                </button>
+            </div>
         </div>
     )
 }

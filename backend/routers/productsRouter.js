@@ -5,9 +5,28 @@ import { client } from "../prisma-client.js";
 const router = Router();
 
 router.get('/', async (req, res) => {
-    const products = await client.product.findMany({ orderBy: { id: 'asc' } });
-
-    res.json({ success: true, message: '', data: products });
+    const page = Math.max(1, Math.floor(Number(req.query.page)) || 1);
+    const limit = Math.min(100, Math.max(1, Math.floor(Number(req.query.limit)) || 10));
+    const search = String(req.query.search ?? '').trim();
+    const where = search ? { name: { contains: search } } : {};
+    const total = await client.product.count({ where });
+    const products = await client.product.findMany({
+        where,
+        orderBy: { id: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+    });
+    res.json({
+        success: true,
+        message: '',
+        data: products,
+        meta: {
+            page,
+            limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / limit))
+        }
+    });
 });
 
 router.get('/:id', async (req, res) => {
