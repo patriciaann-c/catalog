@@ -16,7 +16,7 @@ function App() {
         setEditingId(product.id);
         setForm({
             name: product.name,
-            descrizione: product.descrizione,
+            description: product.description,
             price: String(product.price)
         });
     }
