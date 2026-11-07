@@ -20,6 +20,7 @@
   "packageManager": "pnpm@12.16.1",
   "type": "module",
   "dependencies": {
+    "@langchain/openrouter": "^0.4.21",
     "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "cors": "^2.8.6",
