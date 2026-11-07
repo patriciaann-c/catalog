@@ -6,34 +6,90 @@ import checkProductBody from '../middlewares/checkProductBody.js';
 
 const router = Router();
 
+function formatProduct(product) {
+    return {
+        ...product,
+        categories: product.categories?.map((link) => link.category) ?? []
+    };
+}
+
 router.get('/', async (req, res) => {
     const page = Math.max(1, Math.floor(Number(req.query.page)) || 1);
     const limit = Math.min(100, Math.max(1, Math.floor(Number(req.query.limit)) || 10));
-    const search = String(req.query.search ?? '').trim();
+    const search = (req.query.search || '').trim();
+
+    let categoryId;
+    if (req.query.category !== undefined) {
+        categoryId = Number(req.query.category);
+        if (!Number.isInteger(categoryId) || categoryId <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Category needs to be an integer and greater than 0',
+                data: null
+            });
+        }
+    }
     const where = search ? { name: { contains: search } } : {};
+
+    if (categoryId !== undefined) {
+        where.categories = { some: { categoryId } };
+    }
+
+    if (req.query.maxPrice !== undefined) {
+        const maxPrice = Number(req.query.maxPrice);
+        if (Number.isFinite(maxPrice) && maxPrice >= 0) {
+            where.price = { lte: maxPrice };
+        }
+    }
+
     const total = await client.product.count({ where });
+
+    const sortFields = ['id', 'name', 'price'];
+    const sort = sortFields.includes(req.query.sort) ? req.query.sort : 'id';
+    const order = req.query.order === 'asc' ? 'asc' : 'desc';
+
     const products = await client.product.findMany({
         where,
-        orderBy: { id: 'desc' },
+        include: {
+            categories: {
+                select: {
+                    category: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        },
+        take: limit,
         skip: (page - 1) * limit,
-        take: limit
+        orderBy: { [sort]: order }
     });
     res.json({
         success: true,
         message: '',
-        data: products,
-        meta: {
-            page,
-            limit,
-            total,
-            totalPages: Math.max(1, Math.ceil(total / limit))
-        }
+        data: products.map(formatProduct),
+        meta: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) }
     });
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkProductId, async (req, res) => {
+    const id = Number(req.params.id);
     const product = await client.product.findUnique({
-        where: { id: Number(req.params.id) }
+        where: { id },
+        include: {
+            categories: {
+                select: {
+                    category: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        }
     });
 
     if (!product) {
@@ -44,7 +100,7 @@ router.get('/:id', async (req, res) => {
         });
     }
 
-    res.json({ success: true, message: '', data: product });
+    res.json({ success: true, message: '', data: formatProduct(product) });
 });
 
 
