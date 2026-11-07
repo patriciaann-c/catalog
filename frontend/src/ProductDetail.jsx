@@ -24,7 +24,12 @@ function ProductDetail() {
         return (
             <div className="container py-4">
                 <div className="alert alert-danger">{error}</div>
+                <div className="d-flex gap-2">
                 <Link to="/" className="btn btn-outline-secondary">Back to the catalog</Link>
+                <Link to="/chat" className="btn btn-primary d-inline-flex align-items-center gap-2">
+                    <span>💬</span> Ask AI about this product
+                </Link>
+            </div>
             </div>
         );
     }
@@ -43,7 +48,12 @@ function ProductDetail() {
                     <p>{product.description}</p>
                 </div>
             </div>
-            <Link to="/" className="btn btn-outline-secondary">Back to the catalog</Link>
+            <div className="d-flex gap-2">
+                <Link to="/" className="btn btn-outline-secondary">Back to the catalog</Link>
+                <Link to="/chat" className="btn btn-primary d-inline-flex align-items-center gap-2">
+                    <span>💬</span> Ask AI about this product
+                </Link>
+            </div>
         </div>
     );
 }

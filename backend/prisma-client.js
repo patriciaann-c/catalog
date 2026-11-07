@@ -1,4 +1,9 @@
-import "dotenv/config";
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.join(import.meta.dirname, '.env') });
+dotenv.config();
+
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 

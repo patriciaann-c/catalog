@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { HumanMessage, AIMessage } from 'langchain';
-import agentProxy from '../AI/agents/proxy.js';
+import { getStoreAgent } from '../AI/agents/store.js'
 import createCatalogPromptAgent from '../AI/agents/catalogPrompt.js';
 
 const router = Router();
 const MAX_MESSAGES = 20;
 const MAX_CONTENT = 2000;
-
 
 function toLangChainMessages(messages) {
     return messages.map((message) =>
@@ -37,10 +36,12 @@ router.post('/chat', async (req, res) => {
         });
     }
     try {
-        const agent = await createCatalogPromptAgent();
-        const response = await agent.invoke({
+        const response = await getStoreAgent().invoke({
             messages: toLangChainMessages(messages)
         });
+        for (const message of response.messages) {
+            console.log(message.type, message.tool_calls ?? '');
+        }
         const last = response.messages.at(-1);
         console.log(last?.usage_metadata);
         res.json({

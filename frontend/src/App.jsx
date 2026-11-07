@@ -130,7 +130,13 @@ function App() {
 
     return (
         <div className="container py-4">
-            <h1 className="h2 mb-4">My Store</h1>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h1 className="h2 mb-0">My Store</h1>
+                <Link to="/chat" className="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm rounded-pill px-3">
+                    <span>💬</span>
+                    <span>Chat with AI</span>
+                </Link>
+            </div>
 
             <form onSubmit={handleSubmit} className="card card-body mb-4">
                 <div className="row g-2 mb-3">
@@ -214,6 +220,24 @@ function App() {
                     Next
                 </button>
             </div>
+
+            {/* Floating Chat Button */}
+            <Link
+                to="/chat"
+                className="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center text-decoration-none"
+                style={{
+                    position: 'fixed',
+                    bottom: '24px',
+                    right: '24px',
+                    width: '56px',
+                    height: '56px',
+                    fontSize: '24px',
+                    zIndex: 1050
+                }}
+                title="Chat with AI Assistant"
+            >
+                💬
+            </Link>
         </div>
     )
 }
