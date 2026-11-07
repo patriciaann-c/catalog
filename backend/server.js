@@ -1,6 +1,7 @@
 import express from "express";
 import productsRouter from "./routers/productsRouter.js";
 import cors from 'cors';
+import aiRouter from './routers/aiRouter.js';
 
 const app = express();
 const PORT = 3000;
@@ -10,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/products', productsRouter);
+app.use('/ai', aiRouter);
 
 app.use((err, req, res, next) => {
     const status = err.status ?? err.statusCode ?? 500;
