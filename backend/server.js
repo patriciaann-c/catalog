@@ -1,12 +1,13 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import categoriesRouter from './routers/categoriesRouter.js'
 
 dotenv.config({ path: path.join(import.meta.dirname, '.env') });
 dotenv.config();
 
 import express from "express";
 import productsRouter from "./routers/productsRouter.js";
+import categoriesRouter from './routers/categoriesRouter.js';
+import statsRouter from './routers/statsRouter.js';
 import cors from 'cors';
 import aiRouter from './routers/aiRouter.js';
 
@@ -19,6 +20,7 @@ app.use(express.json());
 
 app.use('/products', productsRouter);
 app.use('/categories', categoriesRouter);
+app.use('/stats', statsRouter);
 app.use('/ai', aiRouter);
 
 app.use((err, req, res, next) => {

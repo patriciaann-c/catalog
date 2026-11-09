@@ -1,5 +1,7 @@
-export default function checkProductBody(req, res, next) {
-    const { name, description, price, image } = req.body ?? {};
+import { client } from '../prisma-client.js';
+
+export default async function checkProductBody(req, res, next) {
+    const { name, description, price, image, categoryIds } = req.body ?? {};
     if (typeof name !== 'string' || name.trim() === '') {
         return res.status(400).json({ success: false, message: 'Name is required', data: null });
     }
@@ -43,11 +45,54 @@ export default function checkProductBody(req, res, next) {
             data: null
         });
     }
+
+    const uniqueIds = [];
+    if (categoryIds !== undefined) {
+        if (!Array.isArray(categoryIds)) {
+            return res.status(400).json({
+                success: false,
+                message: 'categoryIds needs to be an array of integers greater than 0',
+                data: null
+            });
+        }
+
+        for (let i = 0; i < categoryIds.length; i++) {
+            const id = categoryIds[i];
+
+            if (!Number.isInteger(id) || id <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'categoryIds needs to be an array of integers greater than 0',
+                    data: null
+                });
+            }
+            if (!uniqueIds.includes(id)) {
+                uniqueIds.push(id);
+            }
+        }
+
+        if (uniqueIds.length > 0) {
+            const found = await client.category.count({
+                where: { id: { in: uniqueIds } }
+            });
+
+            if (found !== uniqueIds.length) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'One or more categories don\'t exist',
+                    data: null
+                });
+            }
+        }
+    }
+
     req.sanitizedData = {
         name: name.trim(),
         description: (description ?? '').trim(),
         price: Number(price),
-        image: sanitizedImage
+        image: sanitizedImage,
+        categoryIds: uniqueIds
     };
+
     next();
 }

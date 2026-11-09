@@ -105,7 +105,7 @@ router.get('/:id', checkProductId, async (req, res) => {
 
 
 router.post('/', checkProductBody, async (req, res) => {
-    const { name, description, price, image } = req.sanitizedData;
+    const { name, description, price, image, categoryIds } = req.sanitizedData;
 
     if (!name || price === undefined) {
         return res.status(400).json({
@@ -116,13 +116,33 @@ router.post('/', checkProductBody, async (req, res) => {
     }
 
     const product = await client.product.create({
-        data: { name, description: description ?? '', price, image }
+        data: {
+            name,
+            description: description ?? '',
+            price,
+            image,
+            categories: categoryIds && categoryIds.length > 0 ? {
+                create: categoryIds.map((categoryId) => ({ categoryId }))
+            } : undefined
+        },
+        include: {
+            categories: {
+                select: {
+                    category: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        }
     });
 
     res.status(201).json({
         success: true,
         message: 'Product created',
-        data: product
+        data: formatProduct(product)
     });
 });
 
