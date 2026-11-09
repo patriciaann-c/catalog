@@ -115,28 +115,30 @@ router.post('/', checkProductBody, async (req, res) => {
         });
     }
 
-    const product = await client.product.create({
-        data: {
-            name,
-            description: description ?? '',
-            price,
-            image,
-            categories: categoryIds && categoryIds.length > 0 ? {
-                create: categoryIds.map((categoryId) => ({ categoryId }))
-            } : undefined
-        },
-        include: {
-            categories: {
-                select: {
-                    category: {
-                        select: {
-                            id: true,
-                            name: true
+    const product = await client.$transaction(async (tx) => {
+        return await tx.product.create({
+            data: {
+                name,
+                description: description ?? '',
+                price,
+                image,
+                categories: categoryIds && categoryIds.length > 0 ? {
+                    create: categoryIds.map((categoryId) => ({ categoryId }))
+                } : undefined
+            },
+            include: {
+                categories: {
+                    select: {
+                        category: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     });
 
     res.status(201).json({
@@ -147,18 +149,48 @@ router.post('/', checkProductBody, async (req, res) => {
 });
 
 router.put('/:id', checkProductId, checkProductBody, async (req, res) => {
-    const { name, description, price, image } = req.sanitizedData;
+    const id = Number(req.params.id);
+    const { name, description, price, image, categoryIds } = req.sanitizedData;
     try {
-        const product = await client.product.update({
-            where: { id: Number(req.params.id) },
-            data: { name, description, price, image }
+        const product = await client.$transaction(async (tx) => {
+            // 1. Eliminiamo i vecchi collegamenti alle categorie con tx
+            await tx.productCategory.deleteMany({
+                where: { productId: id }
+            });
+
+            // 2. Aggiorniamo il prodotto e ricreiamo i nuovi collegamenti con tx
+            return await tx.product.update({
+                where: { id },
+                data: {
+                    name,
+                    description,
+                    price,
+                    image,
+                    categories: categoryIds && categoryIds.length > 0 ? {
+                        create: categoryIds.map((categoryId) => ({ categoryId }))
+                    } : undefined
+                },
+                include: {
+                    categories: {
+                        select: {
+                            category: {
+                                select: {
+                                    id: true,
+                                    name: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         });
-        res.json({ success: true, message: 'Prodotto aggiornato', data: product });
+
+        res.json({ success: true, message: 'Product updated', data: formatProduct(product) });
     } catch (err) {
         if (err.code === 'P2025') {
             return res.status(404).json({
                 success: false,
-                message: 'Prodotto non trovato',
+                message: 'Product not found',
                 data: null
             });
         }
@@ -166,10 +198,17 @@ router.put('/:id', checkProductId, checkProductBody, async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkProductId, async (req, res) => {
+    const id = Number(req.params.id);
     try {
-        const product = await client.product.delete({
-            where: { id: Number(req.params.id) }
+        const product = await client.$transaction(async (tx) => {
+            await tx.productCategory.deleteMany({
+                where: { productId: id }
+            });
+
+            return await tx.product.delete({
+                where: { id }
+            });
         });
 
         res.json({ success: true, message: 'Product deleted', data: product });
