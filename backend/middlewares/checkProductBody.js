@@ -1,7 +1,7 @@
 import { client } from '../prisma-client.js';
 
 export default async function checkProductBody(req, res, next) {
-    const { name, description, price, image, categoryIds } = req.body ?? {};
+    const { name, description, price, image, categoryIds = [] } = req.body ?? {};
     if (typeof name !== 'string' || name.trim() === '') {
         return res.status(400).json({ success: false, message: 'Name is required', data: null });
     }

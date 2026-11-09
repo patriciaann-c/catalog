@@ -153,12 +153,9 @@ router.put('/:id', checkProductId, checkProductBody, async (req, res) => {
     const { name, description, price, image, categoryIds } = req.sanitizedData;
     try {
         const product = await client.$transaction(async (tx) => {
-            // 1. Eliminiamo i vecchi collegamenti alle categorie con tx
             await tx.productCategory.deleteMany({
                 where: { productId: id }
             });
-
-            // 2. Aggiorniamo il prodotto e ricreiamo i nuovi collegamenti con tx
             return await tx.product.update({
                 where: { id },
                 data: {

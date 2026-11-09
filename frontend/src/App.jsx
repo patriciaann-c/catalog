@@ -16,6 +16,19 @@ function App() {
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [categoryId, setCategoryId] = useState('');
+
+    useEffect(() => {
+        fetch(`${API_URL}/categories`)
+            .then((response) => response.json())
+            .then((jsonData) => {
+                if (jsonData.success) {
+                    setCategories(jsonData.data);
+                }
+            })
+            .catch((err) => setError(err.message));
+    }, []);
 
     function startEdit(product) {
         setEditingId(product.id);
@@ -44,9 +57,12 @@ function App() {
         setSearch(searchInput);
     }
 
-    function loadProducts(targetPage = page, targetSearch = search) {
+    function loadProducts(targetPage = page, targetSearch = search, targetCategoryId = categoryId) {
         setIsLoading(true);
         const params = new URLSearchParams({ page: targetPage, limit: 12, search: targetSearch });
+        if (targetCategoryId !== '') {
+            params.set('category', targetCategoryId);
+        }
         fetch(`${API_URL}/products?${params}`)
             .then((response) => response.json())
             .then((jsonData) => {
@@ -65,12 +81,18 @@ function App() {
         setSearchInput('');
         setSearch('');
         setPage(1);
-        loadProducts(1, '');
+        setCategoryId('');
+        loadProducts(1, '', '');
     }
 
     useEffect(() => {
         loadProducts();
-    }, [page, search]);
+    }, [page, search, categoryId]);
+
+    function handleCategoryChange(event) {
+        setPage(1);
+        setCategoryId(event.target.value);
+    }
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -163,6 +185,16 @@ function App() {
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 placeholder="Search by product name..."
                             />
+                            <div className="col-md-4">
+                                <select className="form-select" value={categoryId} onChange={handleCategoryChange}>
+                                    <option value="">All the categories</option>
+                                    {categories.map((category) => (
+                                        <option key={category.id} value={category.id}>
+                                            {category.name}: {category.productsCount}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <button type="submit" className="btn btn-primary px-3 fw-semibold">
                                 Search
                             </button>
@@ -327,6 +359,9 @@ function App() {
                                             {product.name}
                                         </Link>
                                     </h2>
+                                    <small className="text-body-secondary ms-2">
+                                        {product.categories.map((category) => category.name).join(', ') || 'No category'}
+                                    </small>
                                     <p
                                         className="card-text text-secondary small flex-grow-1 mb-3"
                                         style={{
@@ -421,5 +456,4 @@ function App() {
         </div>
     );
 }
-
 export default App;
