@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 const emptyForm = { name: '', description: '', price: '' };
 
@@ -180,6 +180,8 @@ function App() {
                         <form onSubmit={handleSearch} className="input-group">
                             <span className="input-group-text bg-light border-end-0 text-muted">🔍</span>
                             <input
+                                id="search-input"
+                                name="search"
                                 className="form-control border-start-0 ps-0"
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}

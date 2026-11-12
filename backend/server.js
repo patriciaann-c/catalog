@@ -14,7 +14,26 @@ import aiRouter from './routers/aiRouter.js';
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+// Allow Chrome's Private Network Access (PNA) for localhost dev
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    next();
+});
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:5173'];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // allow requests with no origin (curl, Postman, server-to-server)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS: origin ${origin} not allowed`));
+        }
+    }
+}));
 
 app.use(express.json());
 
